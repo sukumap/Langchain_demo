@@ -1,25 +1,33 @@
-import langchain
-from langchain.chains import llmchain 
-from langchain.prompts import PromptTemplate
-from langchain.chat_models import ChatOpenAI
 from dotenv import load_dotenv
+from langchain.prompts import PromptTemplate
+from langchain_openai import ChatOpenAI
 
+import os
 load_dotenv()
-print (" Setup complete")
-routerTemplate = "Given the user input below, decide which destination it should go to {input} "
-routerprompt = PromptTemplate.from_template(routerTemplate)
-print(routerprompt.format(input="Tell me a joke."))
 
-destinations = ["joke: Tells a Joke", "weather: Gives a weather", "math: Solves math problems", "default: Handle other queries"]
+llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo")
+
+destinations = [
+    "joke: Tells a Joke",
+    "weather: Gives a weather",
+    "math: Solves math problems",
+    "default: Handle other queries"
+]
 destination_str = "\n".join(destinations)
-print (destination_str)
 
-router_template_full = """ You're a routing assistant. Choose the most appropriate destination for users input.
-Available destinations: 
+router_template_full = """You are a routing assistant. Choose the most appropriate destination for the user's input.
+
+Available destinations:
 {dest_str}
-User input :  
+
+User input:
 {input}
-Return the destination name only"""
+
+Return the destination name only.
+"""
 
 router_prompt_full = PromptTemplate.from_template(router_template_full)
-print (router_prompt_full.format(input = "Tell me a Joke", dest_str = destination_str))
+chain = router_prompt_full | llm
+
+result = chain.invoke({"dest_str": destination_str, "input": "5+5=?"})
+print(result)
