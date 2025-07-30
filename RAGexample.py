@@ -12,6 +12,7 @@ from langchain.chains import RetrievalQA
 from langchain_community.document_loaders import PyPDFLoader
 import os
 from dotenv import load_dotenv
+import json
 
 load_dotenv()
 #envfilevalue = dotenv_values().get("OPENAI_API_KEY")
@@ -32,9 +33,30 @@ embedding_model = OpenAIEmbeddings()
 #print (f" Embed 1 value is {str(embed_1)[:100]}")
 vector_store = FAISS.from_documents(chunks, embedding_model)
 
-retreived = vector_store.similarity_search("What is an agent?", k=2)
-print (f" Retreived answer is {retreived[0].page_content}")
+#retreived = vector_store.similarity_search("What is an agent?", k=2)
+#print (f" Retreived answer is {retreived[0].page_content}")
 
-print (f" Length of retreived is {len(retreived)}")
+#print (f" Length of retreived is {len(retreived)}")
 
+retriever = vector_store.as_retriever()
+
+llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo")
+qachain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever, return_source_documents= True)
+
+query = "What is an agent?"
+
+response = qachain.invoke({"query": query})
+
+#print (f"The formatted response is {json.dumps(response, indent=2, default=str)}")
+
+for index,source in enumerate(response["source_documents"]):
+    title = source.metadata.get("title", "Unknown Title")
+    page = source.metadata.get("page_label", "N/A")
+    details = source.page_content.replace("\n", " ")
+    print(f"Link {index+1} details is ")
+    print (f"\tPageDetails is {page}") 
+    print (f"\tBrief source details is {details[:100]} ")
+
+#print (f" The response is {response["result"]}")
+#print (f" The source is ")
 
